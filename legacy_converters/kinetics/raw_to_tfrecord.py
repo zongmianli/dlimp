@@ -21,10 +21,11 @@ should be the path to the directory where the TFRecord files will be written.
 Follow instructions in https://github.com/cvdfoundation/kinetics-dataset for downloading the specific kinetics dataset of your choosing.
 """
 
-import pandas as pd
 import os
+
 import imageio
 import numpy as np
+import pandas as pd
 import tensorflow as tf
 import tqdm
 from absl import app, flags, logging
@@ -58,20 +59,27 @@ def create_tfrecord(shard, output_path, tqdm_func, global_tqdm):
             height = video[0].shape[0]
             width = video[0].shape[1]
             ratio = width / height
-            
+
             if ratio > 4 / 3:
                 # center crop horizontally
                 desired_width = int(np.round(4 / 3 * height))
                 video = [
-                    image[:, (width - desired_width) // 2 : (width + desired_width) // 2] for image in video
+                    image[
+                        :, (width - desired_width) // 2 : (width + desired_width) // 2
+                    ]
+                    for image in video
                 ]
             elif ratio < 4 / 3:
                 # center crop vertically
                 desired_height = int(np.round(3 / 4 * width))
                 video = [
-                    image[(height - desired_height) // 2 : (height + desired_height) // 2, :] for image in video
+                    image[
+                        (height - desired_height) // 2 : (height + desired_height) // 2,
+                        :,
+                    ]
+                    for image in video
                 ]
-                
+
         # now resize to square 240x240
         video = [resize_image(image, (240, 240)) for image in video]
         video = [
@@ -98,7 +106,9 @@ def create_tfrecord(shard, output_path, tqdm_func, global_tqdm):
 
 
 def main(_):
-    tf.config.set_visible_devices([], "GPU") # TF might look for GPUs and crash out if it finds one
+    tf.config.set_visible_devices(
+        [], "GPU"
+    )  # TF might look for GPUs and crash out if it finds one
 
     if tf.io.gfile.exists(FLAGS.output_path):
         if FLAGS.overwrite:
@@ -111,18 +121,16 @@ def main(_):
     # load annotations
     with open(os.path.join(FLAGS.input_path, "annotations", "train.csv"), "r") as f:
         train_annotations = pd.read_csv(f)
-    with open(
-        os.path.join(FLAGS.input_path, "annotations", "val.csv"), "r"
-    ) as f:
+    with open(os.path.join(FLAGS.input_path, "annotations", "val.csv"), "r") as f:
         val_annotations = pd.read_csv(f)
 
     # filter
     train_annotations = [
-        (row['label'], row['youtube_id'], row['time_start'], row['time_end'])
+        (row["label"], row["youtube_id"], row["time_start"], row["time_end"])
         for idx, row in train_annotations.iterrows()
     ]
     val_annotations = [
-        (row['label'], row['youtube_id'], row['time_start'], row['time_end'])
+        (row["label"], row["youtube_id"], row["time_start"], row["time_end"])
         for idx, row in val_annotations.iterrows()
     ]
 
@@ -131,30 +139,28 @@ def main(_):
     train = []
     count = 0
     for label, youtube_id, time_start, time_end in train_annotations:
-        #Downloader was made by geniuses as you can tell
-        path = f"{FLAGS.input_path}/train/{youtube_id}_{time_start:06d}_{time_end:06d}.mp4"
+        # Downloader was made by geniuses as you can tell
+        path = (
+            f"{FLAGS.input_path}/train/{youtube_id}_{time_start:06d}_{time_end:06d}.mp4"
+        )
         if not os.path.exists(path):
             count += 1
             continue
-        train.append({
-            "path": path,
-            "label": label
-        })
-    
+        train.append({"path": path, "label": label})
+
     print("Number of train files not found: ", count)
-    
+
     val = []
     count = 0
     for label, youtube_id, time_start, time_end in val_annotations:
-        path = f"{FLAGS.input_path}/val/{youtube_id}_{time_start:06d}_{time_end:06d}.mp4"
+        path = (
+            f"{FLAGS.input_path}/val/{youtube_id}_{time_start:06d}_{time_end:06d}.mp4"
+        )
         if not os.path.exists(path):
             count += 1
             continue
-        val.append({
-            "path": path,
-            "label": label
-        })
-    
+        val.append({"path": path, "label": label})
+
     print("Number of val files not found: ", count)
 
     # shard
