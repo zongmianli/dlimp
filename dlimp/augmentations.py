@@ -107,9 +107,10 @@ def augment_image(
     image = tf.image.convert_image_dtype(image, tf.float32)
 
     if seed is None:
-        seed = tf.random.uniform([2], 0, 2**31 - 1, dtype=tf.int32)
+        seed = tf.random.uniform([2], maxval=tf.dtypes.int32.max, dtype=tf.int32)
 
     for op in augment_kwargs["augment_order"]:
+        seed = tf.random.stateless_uniform([2], seed, maxval=tf.dtypes.int32.max, dtype=tf.int32)
         if op in augment_kwargs:
             if hasattr(augment_kwargs[op], "items"):
                 image = AUGMENT_OPS[op](image, seed=seed, **augment_kwargs[op])
