@@ -36,7 +36,7 @@ def random_resized_crop(image, scale, ratio, seed):
     )
 
     image = tf.image.crop_and_resize(
-        image, bounding_boxes, tf.range(batch_size), (height, width)
+        image, bounding_boxes, tf.range(batch_size), (height, width), method="nearest"
     )
 
     if image.shape[0] == 1:

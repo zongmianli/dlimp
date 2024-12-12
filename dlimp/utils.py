@@ -9,10 +9,10 @@ def tensor_feature(value):
     )
 
 
-def resize_image(image: tf.Tensor, size: Tuple[int, int]) -> tf.Tensor:
+def resize_image(image: tf.Tensor, size: Tuple[int, int], method="area") -> tf.Tensor:
     """Resizes an image using Lanczos3 interpolation. Expects & returns uint8."""
     assert image.dtype == tf.uint8
-    image = tf.image.resize(image, size, method="lanczos3", antialias=True)
+    image = tf.image.resize(image, size, method=method, antialias=True)
     image = tf.cast(tf.clip_by_value(tf.round(image), 0, 255), tf.uint8)
     return image
 
